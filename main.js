@@ -82,7 +82,7 @@ let dropAtX = (x) => {
   if (!canDrop()) return;
   tapHint.style.display = "none";
   const body = spawnCat(Math.max(40, Math.min(W-40, x)), nextTierId);
-  if (save.settings.sfx) { try { sfx.meow.currentTime = 0; sfx.meow.play(); } catch {} }
+  if (save.settings.sfx) { try { sfx.meow.currentTime = 0; sfx.meow.play().catch(()=>{}); } catch {} }
   lastDropTime = performance.now();
   prepareNext();
   // gentle impulse
@@ -204,7 +204,7 @@ function handleMerge(a, b) {
       Body.setVelocity(copy, { x: 0.8, y: 2 });
       pendingCopy = false;
     }
-    if (save.settings.sfx) { try { sfx.merge.currentTime = 0; sfx.merge.play(); } catch {} }
+    if (save.settings.sfx) { try { sfx.merge.currentTime = 0; sfx.merge.play().catch(()=>{}); } catch {} }
     saveStateDebounced();
   }
 }
@@ -257,7 +257,7 @@ function updateNearPurr() {
       }
     }
   }
-  if (found && save.settings.sfx && audioStarted) { if (sfx.purr.paused) { try { sfx.purr.currentTime = 0; sfx.purr.play(); } catch {} } }
+  if (found && save.settings.sfx && audioStarted) { if (sfx.purr.paused) { try { sfx.purr.currentTime = 0; sfx.purr.play().catch(()=>{}); } catch {} } }
   else { if (!sfx.purr.paused) { try { sfx.purr.pause(); sfx.purr.currentTime = 0; } catch {} } }
 }
 
@@ -307,7 +307,7 @@ function usePowerUp(key) {
     const once = (x) => {
       if (!canDrop()) return;
       const body = spawnCat(Math.max(40, Math.min(W-40, x)), wildTier, { wild: true });
-      if (save.settings.sfx) { try { sfx.meow.currentTime = 0; sfx.meow.play(); } catch {} }
+      if (save.settings.sfx) { try { sfx.meow.currentTime = 0; sfx.meow.play().catch(()=>{}); } catch {} }
       lastDropTime = performance.now();
       prepareNext(); wildPreviewActive = false; dropAtX = origDrop;
     };
