@@ -39,7 +39,7 @@ const sfx = {
 };
 sfx.meow.volume = 0.5; sfx.merge.volume = 0.6; sfx.purr.volume = 0.2; sfx.purr.loop = true;
 let audioStarted = false;
-function ensureAudio() { if (audioStarted || !save.settings.sfx) return; audioStarted = true; sfx.purr.currentTime = 0; sfx.purr.play().catch(()=>{}); }
+function ensureAudio() { if (audioStarted || !save.settings.sfx) return; audioStarted = true; /* no auto purr here */ }
 
 function loadSprites() {
   const keys = new Set(CAT_TIERS.map(t => t.sprite));
@@ -151,6 +151,7 @@ function step() {
   Engine.update(engine, 1000/60);
   draw();
   checkOverflow();
+  updateNearPurr(); // proximity-based purr + rumble
   requestAnimationFrame(step);
 }
 requestAnimationFrame(step);
@@ -230,6 +231,34 @@ function checkOverflow() {
     } else { meta.belowSince = 0; }
   });
   if (anyFail) gameOver();
+}
+
+let lastPurrRumble = 0;
+function updateNearPurr() {
+  const now = performance.now();
+  let found = false;
+  const arr = [...cats.entries()].map(([id, m]) => ({ m, b: Composite.get(world, id, "body") })).filter(x=>x.b);
+  for (let i=0;i<arr.length && !found;i++) for (let j=i+1;j<arr.length && !found;j++) {
+    const A = arr[i], B = arr[j];
+    if (A.m.wild || B.m.wild) continue;
+    if (A.m.tier !== B.m.tier) continue;
+    const rsum = CAT_TIERS[A.m.tier].radius + CAT_TIERS[B.m.tier].radius;
+    const dx = B.b.position.x - A.b.position.x, dy = B.b.position.y - A.b.position.y;
+    const d = Math.hypot(dx, dy);
+    if (d > rsum && d < rsum + 10) {
+      found = true;
+      if (now - lastPurrRumble > 120) {
+        const nx = dx / d, ny = dy / d, f = 0.0006;
+        Body.applyForce(A.b, A.b.position, { x: -nx * f, y: -ny * f });
+        Body.applyForce(B.b, B.b.position, { x:  nx * f, y:  ny * f });
+        Body.setAngularVelocity(A.b, (Math.random()-0.5)*0.04);
+        Body.setAngularVelocity(B.b, (Math.random()-0.5)*0.04);
+        lastPurrRumble = now;
+      }
+    }
+  }
+  if (found && save.settings.sfx && audioStarted) { if (sfx.purr.paused) { try { sfx.purr.currentTime = 0; sfx.purr.play(); } catch {} } }
+  else { if (!sfx.purr.paused) { try { sfx.purr.pause(); sfx.purr.currentTime = 0; } catch {} } }
 }
 
 function openOverlay(title, html) {
